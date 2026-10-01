@@ -3,7 +3,10 @@ using UnityEngine;
 public class PlayerMovement : MonoBehaviour
 {
     [Header("Movement")]
-    public float moveSpeed;
+    private float moveSpeed;
+    public float walkSpeed;
+    public float sprintSpeed;
+
 
     public float groundDrag;
 
@@ -14,6 +17,7 @@ public class PlayerMovement : MonoBehaviour
 
     [Header("Keybinds")]
     public KeyCode jumpKey = KeyCode.Space;
+    public KeyCode sprintKey = KeyCode.LeftShift;
 
     [Header("Ground Check")]
     public float playerHeight;
@@ -53,6 +57,7 @@ public class PlayerMovement : MonoBehaviour
         grounded = Physics.Raycast(transform.position, Vector3.down, playerHeight * 0.5f + 0.2f, whatIsGround); 
 
         MyInput();
+        SpeedControl();
 
         if (grounded && !activeGrapple)
         {
@@ -66,7 +71,7 @@ public class PlayerMovement : MonoBehaviour
     private void FixedUpdate()
     {
         MovePlayer();
-        SpeedControl();
+        
     }
     private void MyInput()
     {
@@ -150,10 +155,19 @@ public class PlayerMovement : MonoBehaviour
             moveSpeed = 0f;
             rb.linearVelocity = Vector3.zero;
         }
+        else if (grounded && Input.GetKey(sprintKey))
+        {
+            state = MovementState.sprinting;
+            moveSpeed = sprintSpeed;
+        }
         else if (grounded)
         {
             state = MovementState.walking;
-            moveSpeed = 7f;
+            moveSpeed = walkSpeed;
+        }
+        else
+        {
+            state = MovementState.air;
         }
     }
     public Vector3 CalculateJumpVelocity(Vector3 startPoint, Vector3 endPoint, float trajectoryHeight)

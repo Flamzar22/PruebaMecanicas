@@ -36,6 +36,9 @@ public class PlayerMovement : MonoBehaviour
     private RaycastHit slopeHit;
     private bool exitingSlope;
 
+    [Header("References")]
+    public Climbing climbingScript;
+
     public Transform orientation;
 
     float horizontalInput;
@@ -112,6 +115,7 @@ public class PlayerMovement : MonoBehaviour
     private void MovePlayer()
     {
         if (activeGrapple) { return; }  
+        if (climbingScript.exitingWall) { return; }
         moveDirection = orientation.forward * verticalInput + orientation.right * horizontalInput;
         if (OnSlope() && !exitingSlope)
         {

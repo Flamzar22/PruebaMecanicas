@@ -6,6 +6,7 @@ public class PlayerMovement : MonoBehaviour
     private float moveSpeed;
     public float walkSpeed;
     public float sprintSpeed;
+    public float climbSpeed;
 
 
     public float groundDrag;
@@ -28,7 +29,7 @@ public class PlayerMovement : MonoBehaviour
     [Header("Ground Check")]
     public float playerHeight;
     public LayerMask whatIsGround;
-    bool grounded;
+    public bool grounded;
 
     [Header("Slope Handling")]
     public float maxSlopeAngle;
@@ -51,9 +52,11 @@ public class PlayerMovement : MonoBehaviour
         walking,
         sprinting,
         crouching,
+        climbing,
         air
     }
 
+    public bool climbing;
     public bool freeze;
     public bool activeGrapple;
     void Start()
@@ -83,8 +86,7 @@ public class PlayerMovement : MonoBehaviour
     }
     private void FixedUpdate()
     {
-        MovePlayer();
-        
+        MovePlayer();  
     }
     private void MyInput()
     {
@@ -199,6 +201,11 @@ public class PlayerMovement : MonoBehaviour
             state = MovementState.freeze;
             moveSpeed = 0f;
             rb.linearVelocity = Vector3.zero;
+        }
+        else if (climbing)
+        {
+            state = MovementState.climbing;
+            moveSpeed = climbSpeed;
         }
         else if (Input.GetKey(crouchKey) && grounded)
         {

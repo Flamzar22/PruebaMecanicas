@@ -1,0 +1,69 @@
+using UnityEngine;
+
+public class Climbing : MonoBehaviour
+{
+    [Header("References")]
+    public Transform orientation;
+    public Rigidbody rb;
+    public LayerMask whatIsWall;
+    public PlayerMovement pm;
+
+    [Header("Climbing")]
+    public float climbSpeed;
+    public float maxClimbTime;
+    private float climbTimer;
+
+    private bool climbing;
+
+    [Header("Detection")]
+    public float detectionLenght;
+    public float sphereCastRadius;
+    public float maxWallLookAngle;
+    private float wallLookAngle;
+
+    private RaycastHit frontWallHit;
+    private bool wallFront;
+
+    private void WallCheck()
+    {
+        wallFront = Physics.SphereCast(transform.position, sphereCastRadius, orientation.forward, out frontWallHit, detectionLenght, whatIsWall);
+        wallLookAngle = Vector3.Angle(orientation.forward, -frontWallHit.normal);
+
+        if (pm.grounded) { climbTimer = maxClimbTime; }
+    }
+    void Update()
+    {
+        WallCheck();
+        StateMachine();
+
+        if (climbing) { ClimbingMovement(); }
+    }
+    private void StateMachine()
+    {
+        if (wallFront && Input.GetKey(KeyCode.W) && wallLookAngle < maxWallLookAngle)
+        {
+            if(!climbing && climbTimer > 0) { StartClimbing(); }
+
+            if(climbTimer > 0) { climbTimer -= Time.deltaTime; }
+            if(climbTimer < 0) { StopClimbing(); }
+        }
+        else
+        {
+            StopClimbing();
+        }
+    }
+    private void StartClimbing()
+    {
+        climbing = true;
+        pm.climbing = true;
+    }
+    private void ClimbingMovement()
+    {
+        rb.linearVelocity = new Vector3(rb.linearVelocity.x, climbSpeed, rb.linearVelocity.z);
+    }
+    private void StopClimbing()
+    {
+        climbing = false;
+        pm.climbing = false;
+    }
+}

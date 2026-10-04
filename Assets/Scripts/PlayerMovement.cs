@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
@@ -7,6 +8,8 @@ public class PlayerMovement : MonoBehaviour
     public float walkSpeed;
     public float sprintSpeed;
     public float climbSpeed;
+    public float dashSpeed;
+    public float dashSpeedChangeFactor;
 
 
     public float groundDrag;
@@ -56,9 +59,11 @@ public class PlayerMovement : MonoBehaviour
         sprinting,
         crouching,
         climbing,
+        dashing,
         air
     }
 
+    public bool dashing;
     public bool climbing;
     public bool freeze;
     public bool activeGrapple;
@@ -78,7 +83,7 @@ public class PlayerMovement : MonoBehaviour
         MyInput();
         SpeedControl();
 
-        if (grounded && !activeGrapple)
+        if (state == MovementState.walking || state == MovementState.sprinting || state == MovementState.crouching)
         {
             rb.linearDamping = groundDrag;
         }
@@ -116,6 +121,7 @@ public class PlayerMovement : MonoBehaviour
     {
         if (activeGrapple) { return; }  
         if (climbingScript.exitingWall) { return; }
+        if (state == MovementState.dashing) { return; }
         moveDirection = orientation.forward * verticalInput + orientation.right * horizontalInput;
         if (OnSlope() && !exitingSlope)
         {
@@ -198,38 +204,95 @@ public class PlayerMovement : MonoBehaviour
             GetComponent<Grappling>().StopGrapple();
         }
     }
+
+    private float desiredMoveSpeed;
+    private float lastDesiredMoveSpeed;
+    private MovementState lastState;
+    private bool keepMomentum;
     private void StateHandler()
     {
         if (freeze)
         {
             state = MovementState.freeze;
-            moveSpeed = 0f;
+            desiredMoveSpeed = 0f;
             rb.linearVelocity = Vector3.zero;
+        }
+        else if (dashing)
+        {
+            state = MovementState.dashing;
+            desiredMoveSpeed = dashSpeed;
+            speedChangeFactor = dashSpeedChangeFactor;
         }
         else if (climbing)
         {
             state = MovementState.climbing;
-            moveSpeed = climbSpeed;
+            desiredMoveSpeed = climbSpeed;
         }
         else if (Input.GetKey(crouchKey) && grounded)
         {
             state = MovementState.crouching;
-            moveSpeed = crouchSpeed;
+            desiredMoveSpeed = crouchSpeed;
         }
         else if (grounded && Input.GetKey(sprintKey))
         {
             state = MovementState.sprinting;
-            moveSpeed = sprintSpeed;
+            desiredMoveSpeed = sprintSpeed;
         }
         else if (grounded)
         {
             state = MovementState.walking;
-            moveSpeed = walkSpeed;
+            desiredMoveSpeed = walkSpeed;
         }
         else
         {
             state = MovementState.air;
+
+            if(desiredMoveSpeed < sprintSpeed) { desiredMoveSpeed = walkSpeed; }
+            else { desiredMoveSpeed = sprintSpeed; }
         }
+
+        bool desiredMoveSpeedHasChanged = desiredMoveSpeed != lastDesiredMoveSpeed;
+        if(lastState == MovementState.dashing) { keepMomentum = true; }
+
+        if (desiredMoveSpeedHasChanged)
+        {
+            if (keepMomentum)
+            {
+                StopAllCoroutines();
+                StartCoroutine(SmoothlyLerpMoveSpeed());
+            }
+            else
+            {
+                StopAllCoroutines();
+                moveSpeed = desiredMoveSpeed;
+            }
+        }
+
+        lastDesiredMoveSpeed = desiredMoveSpeed;
+        lastState = state;
+    }
+    private float speedChangeFactor;
+    private IEnumerator SmoothlyLerpMoveSpeed()
+    {
+        // smoothly lerp movementSpeed to desired value
+        float time = 0;
+        float difference = Mathf.Abs(desiredMoveSpeed - moveSpeed);
+        float startValue = moveSpeed;
+
+        float boostFactor = speedChangeFactor;
+
+        while (time < difference)
+        {
+            moveSpeed = Mathf.Lerp(startValue, desiredMoveSpeed, time / difference);
+
+            time += Time.deltaTime * boostFactor;
+
+            yield return null;
+        }
+
+        moveSpeed = desiredMoveSpeed;
+        speedChangeFactor = 1f;
+        keepMomentum = false;
     }
     public Vector3 CalculateJumpVelocity(Vector3 startPoint, Vector3 endPoint, float trajectoryHeight)
     {

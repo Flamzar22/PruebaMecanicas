@@ -43747,6 +43747,7 @@ GameObject:
   - component: {fileID: 2111097589}
   - component: {fileID: 2111097590}
   - component: {fileID: 2111097592}
+  - component: {fileID: 2111097593}
   - component: {fileID: 2111097591}
   m_Layer: 0
   m_Name: Player
@@ -43814,6 +43815,8 @@ MonoBehaviour:
   walkSpeed: 7
   sprintSpeed: 10
   climbSpeed: 3
+  dashSpeed: 20
+  dashSpeedChangeFactor: 50
   groundDrag: 5
   jumpForce: 12
   jumpCooldown: 0.25
@@ -43832,6 +43835,7 @@ MonoBehaviour:
   climbingScript: {fileID: 2111097592}
   orientation: {fileID: 914447511}
   state: 0
+  dashing: 0
   climbing: 0
   freeze: 0
   activeGrapple: 0
@@ -43889,6 +43893,28 @@ MonoBehaviour:
   minWallNormalAngleChange: 5
   exitingWall: 0
   exitWallTime: 0.2
+--- !u!114 &2111097593
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2111097587}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 225061494a0478749aaee3364d089308, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Dashing
+  orientation: {fileID: 914447511}
+  playerCam: {fileID: 630346629}
+  dashForce: 20
+  dashUpwardForce: 0
+  dashDuration: 0.25
+  allowAllDirections: 1
+  disableGravity: 1
+  resetVelocity: 1
+  dashCd: 1.5
+  dashKey: 101
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
